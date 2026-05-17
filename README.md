@@ -12,30 +12,54 @@ Train Russian punctuation restoration model on **GPU** (much faster than local M
 
 The notebook needs `sentences.csv` (710MB, 1.194M Russian sentences from Tatoeba).
 
-**Option A: Upload in Colab (Recommended)**
-- Run first 2 cells in notebook
-- Click left sidebar → Upload → select `sentences.csv`
-- Wait for upload (~2-3 min for 710MB over slow internet)
+**Corpus Detection Priority:**
+1. Check `/content/sentences.csv` (if already in Colab)
+2. Check Google Drive: `/content/drive/MyDrive/PunctNLU/sentences.csv`
+3. Prompt for upload if not found
 
-**Option B: Use Google Drive**
-1. Upload `sentences.csv` to your Google Drive (same account as Colab)
-2. In notebook, copy from Drive:
-```python
-!cp /content/drive/MyDrive/sentences.csv ./sentences.csv
+**Option A: Direct Upload in Colab (Fastest)**
+- Run first cell in notebook
+- If corpus not found, click "Choose Files" button
+- Select `sentences.csv` from your computer
+- Colab uploads it automatically (~5-10 min)
+
+**Option B: Pre-upload to Google Drive**
+1. Upload `sentences.csv` to Google Drive (your account)
+2. Create folder: `PunctNLU` in `MyDrive`
+3. Place file there before running notebook
+4. Notebook will find it automatically
+
+**Option C: Use Standalone Script**
+```bash
+# In Colab (Runtime → Run all cells)
+# OR locally if you have GPU:
+python run_training.py
 ```
-
-**Option C: Download from Release (if available)**
-- Check GitHub Releases for corpus artifact
+Script auto-detects corpus at `/content/sentences.csv` or `./sentences.csv`
 
 ### 3️⃣ Run Training
 
+**Method 1: Interactive Notebook**
 Execute cells in order:
 1. **Setup & Install** — installs PyTorch, transformers, etc.
-2. **Mount Drive** — optional, for corpus access
+2. **Mount Drive + Corpus Check** — auto-detects `/content/sentences.csv` or Google Drive, uploads if needed
 3. **Configuration** — CUDA-optimized settings (batch_size=32)
 4. **Data Loading** — reads corpus (takes ~1 min)
 5. **Training** — 3 epochs on GPU (~2-4 hours depending on GPU type)
 6. **Download Results** — download trained `best.pt` model
+
+**Method 2: Standalone Script (Skip Mount Cell)**
+If corpus already at `/content/sentences.csv`:
+```python
+# In Colab cell:
+!python run_training.py
+```
+Or locally with GPU:
+```bash
+python run_training.py
+```
+
+The script auto-verifies corpus and shows status before training.
 
 ## Performance
 
@@ -67,11 +91,34 @@ After training:
 2. Export to CoreML for iOS/macOS
 3. Integrate into AIssistant app
 
+## Verify Corpus Before Training
+
+Run this in Colab to check where corpus is:
+```python
+from pathlib import Path
+
+# Check all possible locations
+locations = [
+    "/content/sentences.csv",
+    "/content/drive/MyDrive/PunctNLU/sentences.csv",
+    "./sentences.csv",
+]
+
+for loc in locations:
+    p = Path(loc)
+    if p.exists():
+        size_mb = p.stat().st_size / 1e6
+        print(f"✓ Found: {loc} ({size_mb:.0f} MB)")
+    else:
+        print(f"✗ Not found: {loc}")
+```
+
 ## Troubleshooting
 
 **Q: "Corpus not found"**
-- Upload `sentences.csv` to Colab file browser (left sidebar)
-- Run cell to check: `Path("./sentences.csv").exists()`
+- Check above locations
+- Upload `sentences.csv` via Colab file browser (left sidebar: Files → Upload)
+- Or run notebook Cell 1 which auto-detects and prompts for upload
 
 **Q: "CUDA out of memory"**
 - Reduce `BATCH_SIZE` from 32 to 16 in configuration cell
