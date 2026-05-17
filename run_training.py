@@ -237,9 +237,12 @@ def train_epoch(model, loader, optimizer, scheduler, device):
         punct_logits, classify_logits = model(input_ids, attention_mask)
 
         loss_punct = ce_loss_fn(punct_logits.view(-1, 12), labels.view(-1))
+
+        # Binary classification: has punctuation (label > 0) or not (label == 0)
+        binary_labels = (labels > 0).long()
         loss_classify = ce_loss_fn(
             classify_logits.view(-1, 2),
-            (labels >= 0).long().view(-1) * labels.view(-1).clamp(min=0)
+            binary_labels.view(-1)
         )
 
         loss = loss_punct + 0.5 * loss_classify
@@ -272,9 +275,12 @@ def eval_epoch(model, loader, device):
             punct_logits, classify_logits = model(input_ids, attention_mask)
 
             loss_punct = ce_loss_fn(punct_logits.view(-1, 12), labels.view(-1))
+
+            # Binary classification: has punctuation (label > 0) or not (label == 0)
+            binary_labels = (labels > 0).long()
             loss_classify = ce_loss_fn(
                 classify_logits.view(-1, 2),
-                (labels >= 0).long().view(-1) * labels.view(-1).clamp(min=0)
+                binary_labels.view(-1)
             )
 
             loss = loss_punct + 0.5 * loss_classify
