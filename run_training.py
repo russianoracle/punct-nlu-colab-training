@@ -32,10 +32,16 @@ WEIGHT_DECAY  = 1e-5
 DEVICE        = "cuda" if torch.cuda.is_available() else "cpu"
 OUTPUT_DIR    = Path("./checkpoints/punct_nlu")
 
-# Find corpus
-CORPUS_PATH = Path("/content/sentences.csv")
-if not CORPUS_PATH.exists():
-    CORPUS_PATH = Path("./sentences.csv")
+# Find corpus - ensure it's Path object
+corpus_local = Path("/content/sentences.csv")
+corpus_cwd = Path("./sentences.csv")
+
+if corpus_local.exists():
+    CORPUS_PATH = corpus_local
+elif corpus_cwd.exists():
+    CORPUS_PATH = corpus_cwd
+else:
+    CORPUS_PATH = corpus_local  # Default for error message
 
 PUNCT_CHARS = {",": 1, ".": 2, "!": 2, "…": 2, ";": 2, "?": 3}
 
